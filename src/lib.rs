@@ -19,12 +19,10 @@ pub struct Screen {
     pub size: (usize, usize),
     pub scale: usize,
     pub title: &'static str,
+    pub raw_title: &'static str,
     window: Window,
     pub buffer: Vec<u32>,
-    pub max_update_time: Duration,
-    max_update_time_as_micros: u32,
-    timestamp_start: Instant,
-    timestamp_end: Instant,
+    pub max_update_time_as_micros: u128,
 }
 impl Screen {
     pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize) -> Screen {
@@ -32,6 +30,7 @@ impl Screen {
             size: (height, width),
             scale: scale,
             title: title,
+            raw_title: title,
             window: Window::new(
                 title,
                 width * scale,
@@ -41,33 +40,7 @@ impl Screen {
                 panic!("{}", e);
             }),
             buffer: vec![0xFF_000000; width * height],
-            max_update_time: Duration::from_millis(1000) / fps as u32,
-            max_update_time_as_micros: (Duration::from_millis(1000) / fps as u32).as_micros() as u32,
-            timestamp_start: Instant::now(),
-            timestamp_end: Instant::now(),
-        }
-    }
-    pub fn update_start(&mut self) {
-        self.timestamp_start = Instant::now();
-    }
-    pub fn update_end(&mut self) {
-        self.timestamp_end = Instant::now();
-    }
-    pub fn wait_for_next_redraw(&mut self) {
-        let elapsed = self.timestamp_start.elapsed();
-        if elapsed < self.max_update_time {
-            let sleep_time = self.max_update_time - elapsed;
-            thread::sleep(sleep_time);
-            self.window.set_title(
-                format!("{} - {:>6}|{:<6}us",
-                self.title, elapsed.as_micros(),
-                self.max_update_time_as_micros).as_str());
-        } else {
-            logger::log(logger::PREFIX_WARN, format!(
-                "\x1b[31mFrame took too long\x1b[0m: \x1b[33m{:>6}\x1b[0m|\x1b[33m{:<6}\x1b[0mus",
-                elapsed.as_micros(),
-                self.max_update_time_as_micros,
-            ).as_str());
+            max_update_time_as_micros: (Duration::from_millis(1000) / fps as u32).as_micros(),
         }
     }
     pub fn is_open(&self) -> bool {
@@ -75,6 +48,9 @@ impl Screen {
     }
     pub fn redraw(&mut self) {
         self.window.update_with_buffer(&self.buffer, self.size.1, self.size.0).unwrap();
+    }
+    pub fn add_to_title(&mut self, text: String) {
+        self.window.set_title(format!("{} - {}", self.raw_title, text).as_str());
     }
 
     pub fn draw_rectangle(&mut self, y: usize, x: usize, size_y: usize, size_x: usize, color: u32) {
