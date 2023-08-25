@@ -1,6 +1,5 @@
 use logger;
 use minifb::{Window, WindowOptions};
-use std::{time::{Duration, Instant}, thread};
 use std::sync::Mutex;
 use rayon::prelude::*;
 
@@ -40,7 +39,7 @@ impl Screen {
                 panic!("{}", e);
             }),
             buffer: vec![0xFF_000000; width * height],
-            max_update_time_as_micros: (Duration::from_millis(1000) / fps as u32).as_micros(),
+            max_update_time_as_micros: 1000000 / fps as u128,
         }
     }
     pub fn is_open(&self) -> bool {
