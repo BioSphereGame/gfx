@@ -12,6 +12,25 @@ pub fn say_hi() {
     );
 }
 
+pub struct WindowOptionsSettings {
+    pub borderless: bool,
+    pub title: bool,
+    pub resize: bool,
+    pub topmost: bool,
+    pub transparency: bool,
+}
+impl WindowOptionsSettings {
+    pub fn new(borderless: bool, title: bool, resize: bool, topmost: bool, transparency: bool) -> WindowOptionsSettings {
+        return WindowOptionsSettings {
+            borderless: borderless,
+            title: title,
+            resize: resize,
+            topmost: topmost,
+            transparency: transparency,
+        }
+    }
+}
+
 pub struct Screen {
     pub size: (usize, usize),
     pub scale: usize,
@@ -23,7 +42,7 @@ pub struct Screen {
     pub max_update_time_as_millis: f64,
 }
 impl Screen {
-    pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize) -> Screen {
+    pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize, window_options: WindowOptionsSettings) -> Screen {
         return Screen {
             size: (height, width),
             scale: scale,
@@ -33,7 +52,16 @@ impl Screen {
                 title,
                 width * scale,
                 height * scale,
-                WindowOptions::default(),
+                WindowOptions{
+                    borderless: window_options.borderless,
+                    title: window_options.title,
+                    resize: window_options.resize,
+                    scale: minifb::Scale::X1,
+                    scale_mode: minifb::ScaleMode::AspectRatioStretch,
+                    topmost: window_options.topmost,
+                    transparency: window_options.transparency,
+                    none: false,
+                },
             ).unwrap_or_else(|e| {
                 panic!("{}", e);
             }),
@@ -51,6 +79,27 @@ impl Screen {
     pub fn add_to_title(&mut self, text: String) {
         self.window.set_title(format!("{} - {}", self.raw_title, text).as_str());
     }
+    
+    pub fn get_pressed_keys(&self) -> Vec<u32> {
+        let keys = self.window.get_keys();
+        let mut key_codes: Vec<u32> = vec!();
+        for key in keys {
+            key_codes.push(key as u32);
+        }
+        return key_codes;
+    }
+    pub fn get_mouse_pos(&self) -> (f32, f32) {
+        return self.window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
+    }
+    pub fn get_mouse_keys(&self) -> (bool, bool, bool) {
+        let keys = (
+            self.window.get_mouse_down(minifb::MouseButton::Left),
+            self.window.get_mouse_down(minifb::MouseButton::Middle),
+            self.window.get_mouse_down(minifb::MouseButton::Right),
+        );
+        return keys;
+    }
+
 
     pub fn draw_rectangle(&mut self, pos_y: usize, pos_x: usize, size_y: usize, size_x: usize, color: u32) {
         let buffer_width = self.size.1;
