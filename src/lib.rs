@@ -1,7 +1,5 @@
 use logger;
 use minifb::{Window, WindowOptions};
-use std::sync::Mutex;
-use rayon::prelude::*;
 
 pub fn say_hi() {
     logger::log(
@@ -52,27 +50,28 @@ impl Screen {
         self.window.set_title(format!("{} - {}", self.raw_title, text).as_str());
     }
 
-    pub fn draw_rectangle(&mut self, y: usize, x: usize, size_y: usize, size_x: usize, color: u32) {
-        let buffer_mutex = Mutex::new(self.buffer.clone());
-        (y..size_y + y).into_par_iter().for_each(|y| {
-            let mut buffer_guard = buffer_mutex.lock().unwrap();
-            for x in x..size_x + x {
+    pub fn draw_rectangle(&mut self, pos_y: usize, pos_x: usize, size_y: usize, size_x: usize, color: u32) {
+        let buffer_width = self.size.1;
+        for y in 0..size_y {
+            let buffer_row_start = (y + pos_y) * buffer_width;
+
+            for x in 0..size_x {
                 if y >= self.size.0 || x >= self.size.1 {
                     continue;
                 }
-                if y * self.scale >= self.size.0 * self.scale || x * self.scale >= self.size.1 * self.scale {
+                if x + pos_x >= self.size.1 || y + pos_y >= self.size.0 {
                     break;
                 }
-                let buffer_index = y * self.size.1 + x;
-                buffer_guard[buffer_index] = color;
+
+                let buffer_index = buffer_row_start + (x + pos_x);
+
+                self.buffer[buffer_index] = color;
             }
-        });
-        self.buffer = buffer_mutex.into_inner().unwrap();
+        };
     }
     pub fn draw_sprite(&mut self, sprite: &[u32], size_y: usize, size_x: usize, pos_y: usize, pos_x: usize) {
         let buffer_width = self.size.1;
-        let buffer_mutex = Mutex::new(self.buffer.clone());
-        (0..size_y).into_par_iter().for_each(|y| {
+        for y in 0..size_y {
             let buffer_row_start = (y + pos_y) * buffer_width;
             let sprite_row_start = y * size_x;
 
@@ -87,10 +86,8 @@ impl Screen {
                 let buffer_index = buffer_row_start + (x + pos_x);
                 let sprite_index = sprite_row_start + x;
 
-                let mut buffer_guard = buffer_mutex.lock().unwrap();
-                buffer_guard[buffer_index] = sprite[sprite_index];
+                self.buffer[buffer_index] = sprite[sprite_index];
             }
-        });
-        self.buffer = buffer_mutex.into_inner().unwrap();
+        };
     }
 }
