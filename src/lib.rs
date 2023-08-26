@@ -20,6 +20,7 @@ pub struct Screen {
     window: Window,
     pub buffer: Vec<u32>,
     pub max_update_time_as_micros: u128,
+    pub max_update_time_as_millis: f64,
 }
 impl Screen {
     pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize) -> Screen {
@@ -38,6 +39,7 @@ impl Screen {
             }),
             buffer: vec![0xFF_000000; width * height],
             max_update_time_as_micros: 1000000 / fps as u128,
+            max_update_time_as_millis: (1000000.0 / fps as f64) / 1000.0 ,
         }
     }
     pub fn is_open(&self) -> bool {

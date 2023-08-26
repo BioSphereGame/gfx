@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 logger = { git = "https://github.com/BioSphereGame/rust-logger.git", tag="v0.1.1" }
 minifb = "0.25.0"
-rayon = "1.7.0"
