@@ -1,6 +1,6 @@
+pub mod ui;
 use logger;
 use minifb::{Window, WindowOptions};
-use rusttype::{Font, Scale, point, PositionedGlyph};
 
 pub fn say_hi() {
     logger::log(
@@ -41,10 +41,9 @@ pub struct Screen {
     pub buffer: Vec<u32>,
     pub max_update_time_as_micros: u128,
     pub max_update_time_as_millis: f64,
-    pub font_data: Vec<u8>,
 }
 impl Screen {
-    pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize, window_options: WindowOptionsSettings, font: Vec<u8>) -> Screen {
+    pub fn new(height: usize, width: usize, scale: usize, title: &'static str, fps: usize, window_options: WindowOptionsSettings) -> Screen {
         return Screen {
             size: (height, width),
             scale: scale,
@@ -70,7 +69,6 @@ impl Screen {
             buffer: vec![0xFF_000000; width * height],
             max_update_time_as_micros: 1000000 / fps as u128,
             max_update_time_as_millis: (1000000.0 / fps as f64) / 1000.0,
-            font_data: font.clone(),
         }
     }
     pub fn is_open(&self) -> bool {
@@ -140,36 +138,11 @@ impl Screen {
                 let buffer_index = buffer_row_start + (x + pos_x);
                 let sprite_index = sprite_row_start + x;
 
+                if (sprite[sprite_index] >> 24) as u8 != 0x00 {
+                    continue;
+                }
                 self.buffer[buffer_index] = sprite[sprite_index];
             }
         };
-    }
-    pub fn draw_text(&mut self, pos_y: usize, pos_x: usize, size: usize, line_spaces: usize, color: u32, text: &str) {
-        let mut pos_y_mut = pos_y;
-        let font = Font::try_from_bytes(self.font_data.as_slice()).expect("Error loading font");
-        let scale = Scale::uniform(size as f32);
-        let v_metrics = font.v_metrics(scale);
-        
-        for line in text.lines() {
-            let glyphs: Vec<PositionedGlyph> = font.layout(line, scale, point(pos_x as f32, pos_y_mut as f32 + v_metrics.ascent)).collect();
-
-            for glyph in glyphs {
-                if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                    glyph.draw(|x, y, v| {
-                        let x = x + bounding_box.min.x as u32 + pos_x as u32;
-                        let y = y + bounding_box.min.y as u32 + pos_y_mut as u32;
-                        if x >= self.size.1 as u32 || y >= self.size.0 as u32 {
-                            return;
-                        }
-                        let index = y * self.size.1 as u32 + x;
-                        if v > 0.1 {
-                            self.buffer[index as usize] = color;
-                        }
-                    });
-                }
-            }
-
-            pos_y_mut += size / 2 + line_spaces;
-        }
     }
 }
