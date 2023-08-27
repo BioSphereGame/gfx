@@ -144,30 +144,32 @@ impl Screen {
             }
         };
     }
-    pub fn draw_text(&mut self, pos_y: usize, pos_x: usize, size: usize, color: u32, secondary_color: u32, text: &str) {
+    pub fn draw_text(&mut self, pos_y: usize, pos_x: usize, size: usize, line_spaces: usize, color: u32, text: &str) {
+        let mut pos_y_mut = pos_y;
         let font = Font::try_from_bytes(self.font_data.as_slice()).expect("Error loading font");
         let scale = Scale::uniform(size as f32);
         let v_metrics = font.v_metrics(scale);
-        let glyphs: Vec<PositionedGlyph> = font.layout(text, scale, point(pos_x as f32, pos_y as f32 + v_metrics.ascent)).collect();
+        
+        for line in text.lines() {
+            let glyphs: Vec<PositionedGlyph> = font.layout(line, scale, point(pos_x as f32, pos_y_mut as f32 + v_metrics.ascent)).collect();
 
-        for glyph in glyphs {
-            if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                glyph.draw(|x, y, v| {
-                    let x = x + bounding_box.min.x as u32 + pos_x as u32;
-                    let y = y + bounding_box.min.y as u32 + pos_y as u32;
-                    let index = y * self.size.1 as u32 + x;
-                    if v > 0.65 {
-                        self.buffer[index as usize] = color;
-                    } else if v > 0.45 {
-                        self.buffer[index as usize] = secondary_color;
-                    }
-                });
-            } else {
-                logger::log(
-                    logger::PREFIX_WARN,
-                    format!("Character {} not found in font", text).as_str()
-                );
+            for glyph in glyphs {
+                if let Some(bounding_box) = glyph.pixel_bounding_box() {
+                    glyph.draw(|x, y, v| {
+                        let x = x + bounding_box.min.x as u32 + pos_x as u32;
+                        let y = y + bounding_box.min.y as u32 + pos_y_mut as u32;
+                        if x >= self.size.1 as u32 || y >= self.size.0 as u32 {
+                            return;
+                        }
+                        let index = y * self.size.1 as u32 + x;
+                        if v > 0.1 {
+                            self.buffer[index as usize] = color;
+                        }
+                    });
+                }
             }
+
+            pos_y_mut += size / 2 + line_spaces;
         }
     }
 }
