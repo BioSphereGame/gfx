@@ -129,5 +129,11 @@ impl RendererText {
 
             pos_y_mut += self.size / 2 + self.line_space as u16;
         }
+
+        for i in 0..self.buffer.len() {
+            if self.buffer[i] != self.color {
+                self.buffer[i] = 0x00_000000;
+            }
+        }
     }
 }

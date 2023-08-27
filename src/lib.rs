@@ -138,7 +138,7 @@ impl Screen {
                 let buffer_index = buffer_row_start + (x + pos_x);
                 let sprite_index = sprite_row_start + x;
 
-                if (sprite[sprite_index] >> 24) as u8 != 0x00 {
+                if (sprite[sprite_index] >> 24) as u8 == 0x00 {
                     continue;
                 }
                 self.buffer[buffer_index] = sprite[sprite_index];
