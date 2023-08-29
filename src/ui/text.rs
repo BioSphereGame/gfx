@@ -139,7 +139,6 @@ impl RendererText {
     }
 
     pub fn render_into_buffer(&mut self, buffer: &mut Vec<u32>) {
-        log_debug!(format!("Rendering text: `{}` into buffer.", self.text).as_str());
         let mut pos_y_mut = self.pos_y;
         let font = Font::try_from_bytes(self.font.data.as_slice()).expect("Error loading font");
         let scale = Scale::uniform(self.size as f32);
