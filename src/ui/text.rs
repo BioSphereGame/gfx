@@ -63,6 +63,7 @@ impl RawText {
     }
 }
 
+#[derive(Clone)]
 pub struct RendererText {
     pub text: String,
     pub pos_y: u16,
@@ -98,7 +99,7 @@ impl RendererText {
     }
 
     pub fn render(&mut self) {
-        log_debug!(format!("Rendering text: `{}`", self.text).as_str());
+        log_debug!(format!("Rendering text: `{}`.", self.text).as_str());
         let mut pos_y_mut = self.pos_y;
         let font = Font::try_from_bytes(self.font.data.as_slice()).expect("Error loading font");
         let scale = Scale::uniform(self.size as f32);
@@ -134,6 +135,42 @@ impl RendererText {
             if self.buffer[i] != self.color {
                 self.buffer[i] = 0x00_000000;
             }
+        }
+    }
+
+    pub fn render_into_buffer(&mut self, buffer: &mut Vec<u32>) {
+        log_debug!(format!("Rendering text: `{}` into buffer.", self.text).as_str());
+        let mut pos_y_mut = self.pos_y;
+        let font = Font::try_from_bytes(self.font.data.as_slice()).expect("Error loading font");
+        let scale = Scale::uniform(self.size as f32);
+        let v_metrics = font.v_metrics(scale);
+        
+        for line in self.text.lines() {
+            let glyphs: Vec<PositionedGlyph> = font.layout(line, scale, point(self.pos_x as f32, pos_y_mut as f32 + v_metrics.ascent)).collect();
+
+            let mut char_counter = 0;
+            for glyph in glyphs {
+                if let Some(bounding_box) = glyph.pixel_bounding_box() {
+                    glyph.draw(|x, y, v| {
+                        let x = x + bounding_box.min.x as u32 + self.pos_x as u32 + char_counter as u32 * self.char_space as u32;
+                        let y = y + bounding_box.min.y as u32 + pos_y_mut as u32;
+                        if x >= self.size_x as u32 || y >= self.size_y as u32 {
+                            return;
+                        }
+                        let index = y * self.size_x as u32 + x;
+                        if index < buffer.len() as u32 {
+                            // For debug:
+                            // println!("x: {}, y: {}, x*y: {}, v: {}, indes: {}", x, y, x * y, v, index);
+                            if v > 0.01 {
+                                buffer[index as usize] = self.color;
+                            }
+                        }
+                    });
+                }
+                char_counter += 1;
+            }
+
+            pos_y_mut += self.size / 2 + self.line_space as u16;
         }
     }
 }
