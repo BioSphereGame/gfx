@@ -101,9 +101,15 @@ impl TextRendererButton {
         if self.hover && screen.get_mouse_keys().0 {
             self.clicked = true;
             self.pause_state = self.pause;
+            self.be_hoverable = false;
         } else {
             self.clicked = false;
         }
+    }
+
+    pub fn set_text(&mut self, text: String) {
+        self.text.text = text;
+        self.render();
     }
 
     pub fn render_button(&mut self) {
