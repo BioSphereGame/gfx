@@ -44,39 +44,27 @@ impl Text {
         };
     }
 
+    pub fn render(&mut self) {
+        self.buffer = self.render_into_buffer().clone();
+    }
+
     pub fn draw(&mut self, screen: &mut crate::Screen) {
         screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y as usize, self.pos_x as usize);
     }
 
-    pub fn render(&mut self) {
-        self.buffer = vec![0x00_000000; self.size_y * self.size_x];
-        self.buffer = self.render_into_buffer().clone();
-
-        for i in 0..self.buffer.len() {
-            if self.buffer[i] != self.text_color {
-                self.buffer[i] = 0x00_000000;
-            }
-        }
-    }
-
     pub fn render_into_buffer(&mut self) -> Vec<u32> {
-        let mut pos_y_mut = self.pos_y;
         let font = Font::try_from_bytes(self.text_font.data.as_slice()).expect("Error loading font");
         let scale = Scale::uniform(self.text_size as f32);
         let v_metrics = font.v_metrics(scale);
-        
+        let mut pos_y = self.pos_y as u16;
+        self.buffer = vec![0x00_000000; self.size_y * self.size_x];
         for line in self.text.lines() {
-            let glyphs: Vec<PositionedGlyph> = font.layout(line, scale, point(self.pos_x as f32, pos_y_mut as f32 + v_metrics.ascent)).collect();
-
-            let mut char_counter = 0;
+            let glyphs: Vec<PositionedGlyph> = font.layout(line, scale, point(self.pos_x as f32, pos_y as f32 + v_metrics.ascent)).collect();
             for glyph in glyphs {
                 if let Some(bounding_box) = glyph.pixel_bounding_box() {
                     glyph.draw(|x, y, v| {
-                        let x = x + bounding_box.min.x as u32 + self.pos_x as u32 + char_counter as u32 * self.text_char_margin as u32;
-                        let y = y + bounding_box.min.y as u32 + pos_y_mut as u32;
-                        if x >= self.size_x as u32 || y >= self.size_y as u32 {
-                            return;
-                        }
+                        let x = x + bounding_box.min.x as u32 + self.pos_x as u32 + self.text_char_margin as u32;
+                        let y = y + bounding_box.min.y as u32 + pos_y as u32;
                         let index = y * self.size_x as u32 + x;
                         if v > 0.01 {
                             if self.buffer.len() < index as usize {
@@ -88,12 +76,9 @@ impl Text {
                         }
                     });
                 }
-                char_counter += 1;
             }
-
-            pos_y_mut += self.text_size / 2 + self.text_line_margin as u16;
+            pos_y += self.text_size / 2 + self.text_line_margin as u16;
         }
-
         return self.buffer.clone();
     }
 }
