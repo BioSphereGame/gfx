@@ -43,14 +43,20 @@ impl TextRendererButton {
         border_size: usize,
         delay: u16,
     ) -> TextRendererButton {
+        let text_pos = (size_y / 4 - text_size / 4) as u16;
         return TextRendererButton {
             text: Text::new(
-                (size_y / 4 - text_size / 4) as u16, 
-                (size_y / 4 - text_size / 4) as u16,
-                text_size as u16, 1, 1,
-                text_color,
-                font, text,
-                size_y, size_x,
+                text_pos,
+                text_pos,
+                size_y,
+                size_x,
+            
+                text,
+                text_size as u16,
+                1,
+                1,
+                text_color as u32,
+                font,
             ),
 
             pos_y,
@@ -68,7 +74,6 @@ impl TextRendererButton {
 
             border_color,
             border_size,
-
 
             pressed: false,
             enabled: true,
