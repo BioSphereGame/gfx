@@ -16,8 +16,8 @@ pub struct TextRendererButton {
     pub border_size: usize,
 
     buffer: Vec<u32>,
-    pub delay: u16,
-    delay_counter: u16,
+    pub delay: usize,
+    delay_counter: usize,
 
     pub pressed: bool,
     pub enabled: bool,
@@ -41,9 +41,9 @@ impl TextRendererButton {
 
         border_color: u32,
         border_size: usize,
-        delay: u16,
+        delay: usize,
     ) -> TextRendererButton {
-        let text_pos = (size_y / 4 - text_size / 4) as u16;
+        let text_pos = size_y / 4 - text_size / 4;
         return TextRendererButton {
             text: Text::new(
                 text_pos,
@@ -52,7 +52,7 @@ impl TextRendererButton {
                 size_x,
             
                 text,
-                text_size as u16,
+                text_size,
                 1,
                 1,
                 text_color as u32,
@@ -68,7 +68,7 @@ impl TextRendererButton {
             hovered_color,
             pressed_color,
 
-            buffer: vec![0xFF_000000; (size_y * size_x) as usize],
+            buffer: vec![0xFF_000000; size_y * size_x],
             delay,
             delay_counter: 0,
 
@@ -87,7 +87,7 @@ impl TextRendererButton {
     }
 
     pub fn draw(&mut self, screen: &mut crate::Screen) {
-        screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y as usize, self.pos_x as usize);
+        screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y, self.pos_x);
     }
 
     pub fn update(&mut self, screen: &mut crate::Screen) {
