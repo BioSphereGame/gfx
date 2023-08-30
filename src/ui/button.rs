@@ -92,6 +92,8 @@ impl TextRendererButton {
 
     pub fn update(&mut self, screen: &mut crate::Screen) {
         self.enabled = true;
+        self.hovered = false;
+        self.pressed = false;
         if self.delay_counter > 0 {
             self.delay_counter -= 1;
             if self.hovered != false {self.hovered = false; self.render();}
@@ -115,8 +117,6 @@ impl TextRendererButton {
         if self.hovered && screen.get_mouse_keys().0 {
             self.delay_counter = self.delay;
             self.pressed = true;
-        } else {
-            self.pressed = false;
         }
     }
 
@@ -144,7 +144,7 @@ impl TextRendererButton {
     pub fn render_text(&mut self) {
         let buffer = self.text.render_into_buffer();
         for i in 0..buffer.len() {
-            if buffer[i] >> 24 != 0x00 as u32 {
+            if (buffer[i] >> 24) as u8 != 0x00 {
                 self.buffer[i] = buffer[i];
             }
         }
