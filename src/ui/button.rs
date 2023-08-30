@@ -81,52 +81,43 @@ impl TextRendererButton {
         }
     }
 
+    pub fn set_text(&mut self, text: String) {
+        self.text.text = text;
+        self.render();
+    }
+
     pub fn draw(&mut self, screen: &mut crate::Screen) {
         screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y as usize, self.pos_x as usize);
     }
 
     pub fn update(&mut self, screen: &mut crate::Screen) {
-        let hovereble: bool;
+        self.enabled = true;
         if self.delay_counter > 0 {
             self.delay_counter -= 1;
-            hovereble = false;
-        } else {
-            hovereble = true;
+            if self.hovered != false {self.hovered = false; self.render();}
+            if self.pressed != false {self.pressed = false; self.render();}
+            if self.enabled != false {self.enabled = false; self.render();}
+            return;
         }
         let mouse_y = screen.get_mouse_pos().1 as usize;
         let mouse_x = screen.get_mouse_pos().0 as usize;
-        let hover: bool;
+        let mut hover: bool = false;
         
-        if hovereble {
-            if mouse_y >= self.pos_y && mouse_y <= self.pos_y + self.size_y && mouse_x >= self.pos_x && mouse_x <= self.pos_x + self.size_x {
-                hover = true;
-            } else {
-                hover = false;
-            }
-        } else {
-            hover = false;
+        if mouse_y >= self.pos_y && mouse_y <= self.pos_y + self.size_y && mouse_x >= self.pos_x && mouse_x <= self.pos_x + self.size_x {
+            hover = true;
         }
 
-        if hovereble != self.enabled {
-            self.hovered = hovereble;
-            self.render();
-        } else if hover != self.hovered {
+        if hover != self.hovered {
             self.hovered = hover;
             self.render();
         }
 
         if self.hovered && screen.get_mouse_keys().0 {
-            self.pressed = true;
             self.delay_counter = self.delay;
-            self.hovered = false;
+            self.pressed = true;
         } else {
             self.pressed = false;
         }
-    }
-
-    pub fn set_text(&mut self, text: String) {
-        self.text.text = text;
-        self.render();
     }
 
     pub fn render_button(&mut self) {
