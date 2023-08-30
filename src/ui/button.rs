@@ -55,7 +55,7 @@ impl TextRendererButton {
                 text_size,
                 1,
                 1,
-                text_color as u32,
+                text_color,
                 font,
             ),
 
