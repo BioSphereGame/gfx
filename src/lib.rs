@@ -101,7 +101,6 @@ impl Screen {
         return keys;
     }
 
-
     pub fn draw_rectangle(&mut self, pos_y: usize, pos_x: usize, size_y: usize, size_x: usize, color: u32) {
         let buffer_width = self.size.1;
         for y in 0..size_y {
@@ -123,6 +122,13 @@ impl Screen {
     }
     pub fn draw_sprite(&mut self, sprite: &[u32], size_y: usize, size_x: usize, pos_y: usize, pos_x: usize) {
         let buffer_width = self.size.1;
+        if self.size.0 < size_y + pos_y || self.size.1 < size_x + pos_x {
+            logger::error(file!(), line!(), column!(), format!("Sprite is out of bounds: size_y: {}, size_x: {} not equal to arg size_y: {} and arg size_x: {}.", self.size.0, self.size.1, size_y, size_x).as_str());
+        } else if self.buffer.len() == 0 {
+            logger::error(file!(), line!(), column!(), "Buffer is empty.");
+        } else if sprite.len() == 0 {
+            logger::error(file!(), line!(), column!(), "Sprite is empty.");
+        }
         for y in 0..size_y {
             let buffer_row_start = (y + pos_y) * buffer_width;
             let sprite_row_start = y * size_x;

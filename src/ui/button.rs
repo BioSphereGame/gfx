@@ -1,7 +1,7 @@
-use super::{text::RendererText, font::FontData};
+use super::{text::Text, font::FontData};
 
 pub struct TextRendererButton {
-    text: RendererText,
+    text: Text,
 
     pub pos_y: usize,
     pub pos_x: usize,
@@ -44,7 +44,7 @@ impl TextRendererButton {
         delay: u16,
     ) -> TextRendererButton {
         return TextRendererButton {
-            text: RendererText::new(
+            text: Text::new(
                 (size_y / 4 - text_size / 4) as u16, 
                 (size_y / 4 - text_size / 4) as u16,
                 text_size as u16, 1, 1,
@@ -62,7 +62,7 @@ impl TextRendererButton {
             hovered_color,
             pressed_color,
 
-            buffer: vec![0x00_000000; (size_y * size_x) as usize],
+            buffer: vec![0xFF_000000; (size_y * size_x) as usize],
             delay,
             delay_counter: 0,
 
@@ -127,15 +127,18 @@ impl TextRendererButton {
     pub fn render_button(&mut self) {
         for y in 0..self.size_y {
             for x in 0..self.size_x {
-                if y < self.border_size || x < self.border_size || y >= self.size_y - self.border_size || x >= self.size_x - self.border_size {
-                    self.buffer[y * self.size_x + x] = self.border_color;
+                let index = y * self.size_x + x;
+                if y <= self.border_size || y >= self.size_y - self.border_size || x <= self.border_size || x >= self.size_x - self.border_size {
+                    self.buffer[index] = self.border_color;
                 } else {
-                    if !self.enabled {
-                        self.buffer[y * self.size_x + x] = self.pressed_color;
-                    } else if !self.hovered {
-                        self.buffer[y * self.size_x + x] = self.base_color;
+                    if self.enabled {
+                        if self.hovered {
+                            self.buffer[index] = self.hovered_color;
+                        } else {
+                            self.buffer[index] = self.base_color;
+                        }
                     } else {
-                        self.buffer[y * self.size_x + x] = self.hovered_color;
+                        self.buffer[index] = self.pressed_color;
                     }
                 }
             }
@@ -143,7 +146,12 @@ impl TextRendererButton {
     }
 
     pub fn render_text(&mut self) {
-        self.text.render_into_buffer(&mut self.buffer);
+        let buffer = self.text.render_into_buffer();
+        for i in 0..buffer.len() {
+            if buffer[i] >> 24 != 0x00 as u32 {
+                self.buffer[i] = buffer[i];
+            }
+        }
     }
 
     pub fn render(&mut self) {
