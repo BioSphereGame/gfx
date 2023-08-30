@@ -16,8 +16,8 @@ pub struct TextRendererButton {
     pub border_size: usize,
 
     buffer: Vec<u32>,
-    pub delay: u16,
-    delay_counter: u16,
+    pub delay: usize,
+    delay_counter: usize,
 
     pub pressed: bool,
     pub enabled: bool,
@@ -41,16 +41,22 @@ impl TextRendererButton {
 
         border_color: u32,
         border_size: usize,
-        delay: u16,
+        delay: usize,
     ) -> TextRendererButton {
+        let text_pos = size_y / 4 - text_size / 4;
         return TextRendererButton {
             text: Text::new(
-                (size_y / 4 - text_size / 4) as u16, 
-                (size_y / 4 - text_size / 4) as u16,
-                text_size as u16, 1, 1,
+                text_pos,
+                text_pos,
+                size_y,
+                size_x,
+            
+                text,
+                text_size,
+                1,
+                1,
                 text_color,
-                font, text,
-                size_y, size_x,
+                font,
             ),
 
             pos_y,
@@ -62,13 +68,12 @@ impl TextRendererButton {
             hovered_color,
             pressed_color,
 
-            buffer: vec![0xFF_000000; (size_y * size_x) as usize],
+            buffer: vec![0xFF_000000; size_y * size_x],
             delay,
             delay_counter: 0,
 
             border_color,
             border_size,
-
 
             pressed: false,
             enabled: true,
@@ -76,52 +81,43 @@ impl TextRendererButton {
         }
     }
 
+    pub fn set_text(&mut self, text: String) {
+        self.text.text = text;
+        self.render();
+    }
+
     pub fn draw(&mut self, screen: &mut crate::Screen) {
-        screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y as usize, self.pos_x as usize);
+        screen.draw_sprite(&self.buffer, self.size_y, self.size_x, self.pos_y, self.pos_x);
     }
 
     pub fn update(&mut self, screen: &mut crate::Screen) {
-        let hovereble: bool;
+        self.enabled = true;
+        self.hovered = false;
+        self.pressed = false;
         if self.delay_counter > 0 {
             self.delay_counter -= 1;
-            hovereble = false;
-        } else {
-            hovereble = true;
+            if self.hovered != false {self.hovered = false; self.render();}
+            if self.pressed != false {self.pressed = false; self.render();}
+            if self.enabled != false {self.enabled = false; self.render();}
+            return;
         }
         let mouse_y = screen.get_mouse_pos().1 as usize;
         let mouse_x = screen.get_mouse_pos().0 as usize;
-        let hover: bool;
+        let mut hover: bool = false;
         
-        if hovereble {
-            if mouse_y >= self.pos_y && mouse_y <= self.pos_y + self.size_y && mouse_x >= self.pos_x && mouse_x <= self.pos_x + self.size_x {
-                hover = true;
-            } else {
-                hover = false;
-            }
-        } else {
-            hover = false;
+        if mouse_y >= self.pos_y && mouse_y <= self.pos_y + self.size_y && mouse_x >= self.pos_x && mouse_x <= self.pos_x + self.size_x {
+            hover = true;
         }
 
-        if hovereble != self.enabled {
-            self.hovered = hovereble;
-            self.render();
-        } else if hover != self.hovered {
+        if hover != self.hovered {
             self.hovered = hover;
             self.render();
         }
 
         if self.hovered && screen.get_mouse_keys().0 {
-            self.pressed = true;
             self.delay_counter = self.delay;
-            self.hovered = false;
-        } else {
-            self.pressed = false;
+            self.pressed = true;
         }
-    }
-
-    pub fn set_text(&mut self, text: String) {
-        self.text.text = text;
-        self.render();
     }
 
     pub fn render_button(&mut self) {
@@ -148,7 +144,7 @@ impl TextRendererButton {
     pub fn render_text(&mut self) {
         let buffer = self.text.render_into_buffer();
         for i in 0..buffer.len() {
-            if buffer[i] >> 24 != 0x00 as u32 {
+            if (buffer[i] >> 24) as u8 != 0x00 {
                 self.buffer[i] = buffer[i];
             }
         }
