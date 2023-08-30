@@ -4,5 +4,6 @@ version = "0.1.2"
 edition = "2021"
 
 [dependencies]
-logger = { git = "https://github.com/BioSphereGame/rust-logger.git", tag="v0.1.1" }
+logger = { git = "https://github.com/BioSphereGame/rust-logger.git", tag="v0.1.2" }
 minifb = "0.25.0"
+rusttype = "0.9.3"

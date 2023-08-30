@@ -1,3 +1,4 @@
+pub mod ui;
 use logger;
 use minifb::{Window, WindowOptions};
 
@@ -67,7 +68,7 @@ impl Screen {
             }),
             buffer: vec![0xFF_000000; width * height],
             max_update_time_as_micros: 1000000 / fps as u128,
-            max_update_time_as_millis: (1000000.0 / fps as f64) / 1000.0 ,
+            max_update_time_as_millis: (1000000.0 / fps as f64) / 1000.0,
         }
     }
     pub fn is_open(&self) -> bool {
@@ -100,7 +101,6 @@ impl Screen {
         return keys;
     }
 
-
     pub fn draw_rectangle(&mut self, pos_y: usize, pos_x: usize, size_y: usize, size_x: usize, color: u32) {
         let buffer_width = self.size.1;
         for y in 0..size_y {
@@ -122,6 +122,13 @@ impl Screen {
     }
     pub fn draw_sprite(&mut self, sprite: &[u32], size_y: usize, size_x: usize, pos_y: usize, pos_x: usize) {
         let buffer_width = self.size.1;
+        if self.size.0 < size_y + pos_y || self.size.1 < size_x + pos_x {
+            logger::error(file!(), line!(), column!(), format!("Sprite is out of bounds: size_y: {}, size_x: {} not equal to arg size_y: {} and arg size_x: {}.", self.size.0, self.size.1, size_y, size_x).as_str());
+        } else if self.buffer.len() == 0 {
+            logger::error(file!(), line!(), column!(), "Buffer is empty.");
+        } else if sprite.len() == 0 {
+            logger::error(file!(), line!(), column!(), "Sprite is empty.");
+        }
         for y in 0..size_y {
             let buffer_row_start = (y + pos_y) * buffer_width;
             let sprite_row_start = y * size_x;
@@ -137,6 +144,9 @@ impl Screen {
                 let buffer_index = buffer_row_start + (x + pos_x);
                 let sprite_index = sprite_row_start + x;
 
+                if (sprite[sprite_index] >> 24) as u8 == 0x00 {
+                    continue;
+                }
                 self.buffer[buffer_index] = sprite[sprite_index];
             }
         };
